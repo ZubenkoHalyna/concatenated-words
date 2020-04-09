@@ -1,10 +1,9 @@
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Arrays;
 
 class OffsetTableReader {
-    private static final String FILE_WRITE_MODE = "r";
+    private static final String FILE_READ_MODE = "r";
     private static final int A_OFFSET = 'a';
     private static final int CHAR_SIZE = 2;
     private static final int NUMBER_OF_CHARS = 'z' - 'a' + 1;
@@ -13,7 +12,7 @@ class OffsetTableReader {
 
     public int[][] read(File textFile) {
         int[][] offsetsTable = new int[NUMBER_OF_CHARS][NUMBER_OF_CHARS];
-        try (RandomAccessFile file = new RandomAccessFile(textFile, FILE_WRITE_MODE)) {
+        try (RandomAccessFile file = new RandomAccessFile(textFile, FILE_READ_MODE)) {
 
             String previousFirstChars = "";
             String line = file.readLine();

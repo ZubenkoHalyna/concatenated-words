@@ -6,7 +6,7 @@ import java.util.List;
 
 public class ConcatenatedWordFinder {
     private static final int A_OFFSET = 'a';
-    private static final String FILE_WRITE_MODE = "r";
+    private static final String FILE_READ_MODE = "r";
 
     private final String fileName;
     private final int[][] offsetsTable;
@@ -20,7 +20,7 @@ public class ConcatenatedWordFinder {
         File textFile = new File(fileName);
 
         List<String> largestWords = new ArrayList<>(List.of("", "", ""));
-        try (RandomAccessFile file = new RandomAccessFile(textFile, FILE_WRITE_MODE)) {
+        try (RandomAccessFile file = new RandomAccessFile(textFile, FILE_READ_MODE)) {
             for (String line = file.readLine(); line != null; line = file.readLine()) {
                 if (line.length() >= largestWords.get(2).length()) {
                     long offset = file.getFilePointer();
