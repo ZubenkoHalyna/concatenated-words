@@ -11,7 +11,6 @@ public class Main {
 
         String[] largestWords = new  ConcatenatedWordFinder(fileName).find();
 
-
         long finish = System.currentTimeMillis();
         double timeConsumed = (finish - start) / 1000.0;
         System.out.println("Time consumed for algorithm: " + timeConsumed + " s");
