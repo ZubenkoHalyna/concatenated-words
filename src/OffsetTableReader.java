@@ -15,10 +15,12 @@ class OffsetTableReader {
         try (RandomAccessFile file = new RandomAccessFile(textFile, "r")) {
 
             String previousFirstChars = "";
+            String line = file.readLine();
             for (char i = 'a'; i <= 'z'; i++) {
                 for (char j = 'a'; j <= 'z'; j++) {
                     String currentFirstChars = "" + i + j;
-                    for (String line = file.readLine(); ; line = file.readLine()) {
+                    for (; ; ) {
+                        line = readNewNotEmptyLineIfNeeded(file, previousFirstChars, line);
                         if (line != null && line.startsWith(currentFirstChars)) {
                             offsetsTable[i - A_OFFSET][j - A_OFFSET] =
                                     (int) file.getFilePointer() - line.length() - CHAR_SIZE;
@@ -40,8 +42,20 @@ class OffsetTableReader {
         return offsetsTable;
     }
 
+    private String readNewNotEmptyLineIfNeeded(RandomAccessFile file,
+                                               String charsToSkip, String currentLine)
+            throws IOException {
+        if (currentLine.startsWith(charsToSkip)) {
+            currentLine = file.readLine();
+            while (currentLine != null && currentLine.isEmpty()) {
+                currentLine = file.readLine();
+            }
+        }
+        return currentLine;
+    }
+
     private void tryToSkip(RandomAccessFile file, String charsToSkip, int bytes) throws IOException {
-        int initialOffset = (int) file.getFilePointer();
+        long initialOffset = file.getFilePointer();
         file.skipBytes(bytes);
         file.readLine();
         String wholeWord = file.readLine();
