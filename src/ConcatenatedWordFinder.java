@@ -1,44 +1,32 @@
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ConcatenatedWordFinder {
     private static final int A_OFFSET = 'a';
-    private static final String FILE_READ_MODE = "r";
 
     private final String fileName;
     private final int[][] offsetsTable;
 
     public ConcatenatedWordFinder(String fileName) {
         this.fileName = fileName;
-        offsetsTable = new OffsetTableReader().read(new File(fileName));
+        offsetsTable = new OffsetTableReader(fileName).read();
     }
 
     public String[] find() {
-        File textFile = new File(fileName);
-
         List<String> largestWords = new ArrayList<>(List.of("", "", ""));
-        try (RandomAccessFile file = new RandomAccessFile(textFile, FILE_READ_MODE)) {
-            for (String line = file.readLine(); line != null; line = file.readLine()) {
+        try (SessionFileReader reader = new SessionFileReader(fileName)) {
+            for (String line = reader.read(); line != null; line = reader.read()) {
                 if (line.length() >= largestWords.get(2).length()) {
-                    long offset = file.getFilePointer();
-                    if (isConcatenatedWord(line, file)) {
+                    if (isConcatenatedWord(line, reader)) {
                         insert(largestWords, line);
                     }
-                    file.seek(offset);
                 }
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
-
         return largestWords.toArray(new String[3]);
     }
 
-
-    private boolean isConcatenatedWord(String word, RandomAccessFile file) throws IOException {
+    private boolean isConcatenatedWord(String word, SessionFileReader reader) {
         if (word.length() < 2) {
             return false;
         }
@@ -46,21 +34,23 @@ public class ConcatenatedWordFinder {
         if (charsOffset == -1) {
             return false;
         }
-        file.seek(charsOffset);
+        reader.startNewSession(charsOffset);
 
-        for (String line = file.readLine(); line != null; line = file.readLine()) {
+        for (String line = reader.read(); line != null; line = reader.read()) {
             if (!line.startsWith("" + word.charAt(0) + word.charAt(1))) {
+                reader.returnToPreviousSession();
                 return false;
-            } else if (word.equals(line)) {
+            }
+            if (word.equals(line)) {
+                reader.returnToPreviousSession();
                 return true;
-            } else if (word.startsWith(line)) {
-                long offset = file.getFilePointer();
-                if (isConcatenatedWord(word.substring(line.length()), file)) {
-                    return true;
-                }
-                file.seek(offset);
+            }
+            if (word.startsWith(line) && isConcatenatedWord(word.substring(line.length()), reader)) {
+                reader.returnToPreviousSession();
+                return true;
             }
         }
+        reader.returnToPreviousSession();
         return false;
     }
 
