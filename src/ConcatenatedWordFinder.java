@@ -12,21 +12,22 @@ public class ConcatenatedWordFinder {
         offsetsTable = new OffsetTableReader(fileName).read();
     }
 
-    public String[] find() {
-        List<String> largestWords = new ArrayList<>(List.of("", "", ""));
+    public Result find() {
+        List<String> largestWords = new ArrayList<>(List.of("", ""));
+        int totalNumberOfWords = 0;
         try (SessionFileReader reader = new SessionFileReader(fileName)) {
             for (String line = reader.read(); line != null; line = reader.read()) {
-                if (line.length() >= largestWords.get(2).length()) {
-                    if (isConcatenatedWord(line, reader)) {
+                if (isConcatenatedWord(line, reader, line.length())) {
+                    if (line.length() >= largestWords.get(1).length())
                         insert(largestWords, line);
-                    }
+                    totalNumberOfWords++;
                 }
             }
         }
-        return largestWords.toArray(new String[3]);
+        return new Result(largestWords.toArray(new String[2]), totalNumberOfWords);
     }
 
-    private boolean isConcatenatedWord(String word, SessionFileReader reader) {
+    private boolean isConcatenatedWord(String word, SessionFileReader reader, int initLength) {
         if (word.length() < 2) {
             return false;
         }
@@ -43,9 +44,9 @@ public class ConcatenatedWordFinder {
             }
             if (word.equals(line)) {
                 reader.returnToPreviousSession();
-                return true;
+                return word.length() < initLength;
             }
-            if (word.startsWith(line) && isConcatenatedWord(word.substring(line.length()), reader)) {
+            if (word.startsWith(line) && isConcatenatedWord(word.substring(line.length()), reader, initLength)) {
                 reader.returnToPreviousSession();
                 return true;
             }
@@ -61,6 +62,16 @@ public class ConcatenatedWordFinder {
                 largestWords.remove(largestWords.size() - 1);
                 break;
             }
+        }
+    }
+
+    public static class Result {
+        public final String[] largestWords;
+        public final int totalNumberOfConcatenatedWords;
+
+        public Result(String[] largestStrings, int totalNumberOfConcatenatedWords) {
+            this.largestWords = largestStrings;
+            this.totalNumberOfConcatenatedWords = totalNumberOfConcatenatedWords;
         }
     }
 }

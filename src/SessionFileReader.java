@@ -55,7 +55,7 @@ class SessionFileReader implements Closeable {
      */
     public int getOffset() {
         try {
-            return (int) channel.position() + buffer.position() - BYTE_BUFFER_SIZE;
+            return (int) channel.position() + buffer.position() - buffer.limit();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
